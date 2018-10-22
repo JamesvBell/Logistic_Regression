@@ -1,0 +1,16 @@
+I had a hard time finding logistic regression examples that actually worked wtih my version of RStudio including R bloggers and some other website I forgot the name of that used the same data set. 
+Version 1.1.383 – © 2009-2017 RStudio, Inc.
+Mozilla/5.0 (Windows NT 6.2; WOW64) AppleWebKit/538.1 (KHTML, like Gecko) rstudio Safari/538.1 Qt/5.4.1
+
+I typed it out, but 99.9% of this was done using this website
+
+: https://stats.idre.ucla.edu/r/dae/logit-regression/
+
+Big Ups to UCLA for this!!
+
+There are some minor changes to the code, I think I deleted an ). It was pretty fun being new to this, hope you enjoy!
+
+
+And also check me out on twitter @stumptownfin or my website stumptownfin.com
+
+If you have anything to contribute or trouble, feel free to reach out to me! 
