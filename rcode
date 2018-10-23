@@ -1,0 +1,117 @@
+## from https://stats.idre.ucla.edu/r/dae/logit-regression/ 
+##UCLA Institute for Digital Research and Education, Thank them!! 
+
+install.packages("aod")
+install.packages("ggplot2")
+
+library(aod)
+library(ggplot2)
+
+mydata <- read.csv("https://stats.idre.ucla.edu/stat/data/binary.csv")
+
+## view the first 6 rows to get an idea of the data-set, we have 4 columns, so 4 variables
+head(mydata)
+
+
+##run quartiles, mean, median of all 4 variables
+summary(mydata)
+
+
+## get the standard deviation using sd
+sapply(mydata, sd)
+
+## two-way contingency table of categorical outcome and predictors we want
+## to make sure there are not 0 cells
+                 
+xtabs(~admit + rank, data = mydata)
+
+## now we'll estimate the logistic regression using the general linear model function glm. First, we convert rank to a factor because rank is a categorical variable
+mydata$rank <-  factor(mydata$rank)
+mylogit <-  glm(admit ~ gre + gpa + rank, data = mydata, family = "binomial")
+
+##Call the summary of mylogit
+summary(mylogit)
+
+## in the above you see the call listed out. The deviance residuals are our goodness of fit. Below you see the Estimate, standard error and z values
+##The logistic regression coeffieciants give the change in log odds for one unit increase in the predictor variable. 
+##so one unit of gre, log odds of admission is .002, for every 1 unit increase in gpa, the log odds of being addmited to grad school increase by .804.
+
+## The indicator ranks, rank 2, 3, and 4 are categorical. If your undergrad school is a rank 2 vs a rank 1, the changes in log odds of admission by -.675.
+
+##Next we run the Confidence Intervals using our profiled log-likliehood
+confint(mylogit)
+
+##Here are our Confidence Inervals using Standard Error.
+confint.default(mylogit)
+
+##now we use wald.test function of aod library to test for a overall effect of rank. This will return the coefficients in the same order of the terms of the model. 
+wald.test(b = coef(mylogit), Sigma = vcov(mylogit), Terms = 4:6)
+
+##The return from above is read "Chi-squared test stat of 20.9, 3 degrees of freedom, and p value of 0.00011 which tells us that the overall effect of rank is statistically significant!
+                   
+##Now let's test other hypotheses about the differences in coefficients on other rank levels. 
+  ## odds ratios only
+  exp(coef(mylogit))
+
+## odds ratios and 95% CI
+exp(cbind(OR = coef(mylogit), confint(mylogit)))
+
+##so for one increase in gpa the odds of being admitted increase by 2.23 times. 
+
+##Next we use predictive Probabilities to help us understand both the categorical and continous data in the model. 
+
+##create data frame object and assign it to newdata1
+
+newdata1 <- with(mydata, data.frame(gre = mean(gre), gpa = mean(gpa), rank = factor(1:4)))
+
+##Let's take a peek at it below
+newdata1
+
+## below we assign a variable to the data frame newdata1 called rankP. This is like adding a column in a table with Type = Response.
+newdata1$rankP <-  predict(mylogit, newdata = newdata1, type = "response")
+
+##Let's take a looksie'
+newdata1
+
+## When we run the above we see that a predicted probability of 51.66% for the highest rank down to 18.50% for the lowest rank. 
+
+## Now we do a similar thing as before, except we are also going to grab the standard errors so that we can plot CI's. We get estimates on a lnik scale and back transform both PV's and CI's into probabilities. 
+
+newdata2 <-  with(mydata, data.frame(gre = rep(seq(from = 200, to = 800, length.out = 100),
+                                               4), gpa =mean(gpa), rank = factor(rep(1:4, each = 100))))
+
+##Might as well take a look at what we're doing here. Below is slightly different than the website. 
+newdata2
+newdata3 <- cbind(newdata2, predict(mylogit, newdata = newdata2, type = "link", 
+  se = TRUE))
+newdata3 <- within(newdata3, {
+  PredictedProb <- plogis(fit)
+  LL <- plogis(fit - (1.96 * se.fit))
+  UL <- plogis(fit + 1.96 * se.fit)
+})               
+               
+
+
+
+head(newdata3)
+
+##Let's use ggplot2 to graph it all out. Leadership in any company is not going to want to see these tables of numbers, they probably don't understand the math. This is why you're here right? 
+##If you recieve an error: Error: could not find function "ggplot" rerun library(ggplot2)
+
+ggplot(newdata3, aes(x = gre, y = PredictedProb)) + geom_ribbon(aes(ymin = LL, 
+    ymax = UL, fill = rank), alpha = 0.2) + geom_line(aes(color = rank), 
+    size = 1)
+                                                                                                                       size = 1)
+##deviance of 2 models
+with(mylogit, null.deviance - deviance)
+
+##degrees of freedom for the difference between the 2 models = number of predictor variables
+with(mylogit, df.null - df.residual)
+
+##p value
+with(mylogit, pchisq(null.deviance, df.null - df.residual, lower.tail = FALSE)
+     
+##then see ithe log likelihood
+logLik(mylogit)
+
+##that's it. I used this website: https://stats.idre.ucla.edu/r/dae/logit-regression/
